@@ -13,8 +13,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 # Import all models to register them with SQLModel/SQLAlchemy registry
 from src.modules.auth.models import User  # noqa: F401
 from src.modules.workspaces.models import (  # noqa: F401
-    Workspace, WorkspaceUserLink, WorkspaceModelLink, GlobalModel,
-)
+    Workspace, WorkspaceUserLink, WorkspaceModelLink, GlobalModel,)
 from src.modules.conversations.models import Conversation, Message  # noqa: F401
 from src.modules.usage.models import UsageLedger  # noqa: F401
 

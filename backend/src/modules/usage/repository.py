@@ -91,28 +91,36 @@ async def get_workspace_usage(session: AsyncSession, workspace_id: uuid.UUID) ->
     }
 
 
+from src.modules.workspaces.models import Workspace
+
 async def get_all_workspaces_usage(session: AsyncSession) -> list[dict]:
     """For the Application Owner: aggregate usage across all workspaces."""
     stmt = (
         select(
             UsageLedger.workspace_id,
+            Workspace.name,
+            User.username,
             func.coalesce(func.sum(UsageLedger.prompt_tokens), 0),
             func.coalesce(func.sum(UsageLedger.completion_tokens), 0),
             func.coalesce(func.sum(UsageLedger.total_tokens), 0),
             func.coalesce(func.sum(UsageLedger.calculated_cost), Decimal("0")),
             func.count(UsageLedger.id),
         )
-        .group_by(UsageLedger.workspace_id)
+        .outerjoin(Workspace, Workspace.id == UsageLedger.workspace_id)
+        .outerjoin(User, User.id == Workspace.admin_id)
+        .group_by(UsageLedger.workspace_id, Workspace.name, User.username)
     )
     result = await session.exec(stmt)
     return [
         {
             "workspace_id": row[0],
-            "total_prompt_tokens": row[1],
-            "total_completion_tokens": row[2],
-            "total_tokens": row[3],
-            "total_cost": float(row[4]),
-            "record_count": row[5],
+            "workspace_name": row[1],
+            "admin_username": row[2],
+            "total_prompt_tokens": row[3],
+            "total_completion_tokens": row[4],
+            "total_tokens": row[5],
+            "total_cost": float(row[6]),
+            "record_count": row[7],
         }
         for row in result.all()
     ]

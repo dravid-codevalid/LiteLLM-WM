@@ -23,12 +23,28 @@ const CHART_COLORS = ["#6366f1", "#818cf8", "#22c55e", "#f59e0b", "#ef4444", "#8
 
 interface WorkspaceUsageData {
   workspace_id: string | null;
+  workspace_name?: string | null;
+  admin_username?: string | null;
   total_prompt_tokens: number;
   total_completion_tokens: number;
   total_tokens: number;
   total_cost: number;
   record_count: number;
 }
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-[#1a1a2e] border border-[#2a2a45] rounded-lg p-3 text-[#e8e8f0] shadow-xl min-w-[150px]">
+        <p className="font-semibold m-0">{data.name || label}</p>
+        {data.admin && <p className="text-xs text-[#8888a8] m-0 mt-1">Admin: {data.admin}</p>}
+        <p className="text-[#6366f1] m-0 mt-2 font-medium">Cost: ${Number(data.cost ?? data.value ?? 0).toFixed(4)}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 interface WorkspaceDetail {
   total: {
@@ -201,14 +217,16 @@ export default function OwnerPage() {
   const totalRecords = globalUsage.reduce((sum, ws) => sum + ws.record_count, 0);
 
   const barChartData = globalUsage.map((ws, i) => ({
-    name: ws.workspace_id ? `WS-${ws.workspace_id.slice(0, 6)}` : "Deleted",
+    name: ws.workspace_name || (ws.workspace_id ? `WS-${ws.workspace_id.slice(0, 6)}` : "Deleted"),
+    admin: ws.admin_username,
     cost: ws.total_cost,
     tokens: ws.total_tokens,
     id: ws.workspace_id,
   }));
 
   const pieData = globalUsage.map((ws, i) => ({
-    name: ws.workspace_id ? `WS-${ws.workspace_id.slice(0, 6)}` : "Deleted",
+    name: ws.workspace_name || (ws.workspace_id ? `WS-${ws.workspace_id.slice(0, 6)}` : "Deleted"),
+    admin: ws.admin_username,
     value: ws.total_cost,
   }));
 
@@ -253,15 +271,7 @@ export default function OwnerPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#2a2a45" />
                     <XAxis dataKey="name" stroke="#8888a8" fontSize={12} />
                     <YAxis stroke="#8888a8" fontSize={12} tickFormatter={(v) => `$${v}`} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1a1a2e",
-                        border: "1px solid #2a2a45",
-                        borderRadius: "8px",
-                        color: "#e8e8f0",
-                      }}
-                      formatter={(value) => [`$${Number(value ?? 0).toFixed(4)}`, "Cost"]}
-                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar
                       dataKey="cost"
                       fill="#6366f1"
@@ -293,15 +303,7 @@ export default function OwnerPage() {
                         <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1a1a2e",
-                        border: "1px solid #2a2a45",
-                        borderRadius: "8px",
-                        color: "#e8e8f0",
-                      }}
-                      formatter={(value) => [`$${Number(value ?? 0).toFixed(4)}`, "Cost"]}
-                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend
                       wrapperStyle={{ color: "#8888a8", fontSize: "12px" }}
                     />

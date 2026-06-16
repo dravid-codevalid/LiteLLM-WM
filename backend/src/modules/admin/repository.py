@@ -31,5 +31,10 @@ async def update_model(session: AsyncSession, model: GlobalModel) -> GlobalModel
 
 
 async def delete_model(session: AsyncSession, model: GlobalModel) -> None:
+    from sqlmodel import delete
+    from src.modules.workspaces.models import WorkspaceModelLink
+
+    # Delete references in workspace_model_links first
+    await session.exec(delete(WorkspaceModelLink).where(WorkspaceModelLink.model_id == model.id))
     await session.delete(model)
     await session.commit()
